@@ -1,0 +1,777 @@
+{
+  "name": "My workflow copy",
+  "nodes": [
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1YVNZuXsP29IClfJUW7D81y0b32JSy0RVw9fY5GDHUCY",
+          "mode": "list",
+          "cachedResultName": "project-StockWatchlist",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1YVNZuXsP29IClfJUW7D81y0b32JSy0RVw9fY5GDHUCY/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1YVNZuXsP29IClfJUW7D81y0b32JSy0RVw9fY5GDHUCY/edit#gid=0"
+        },
+        "filtersUI": {
+          "values": [
+            {
+              "lookupColumn": "is_active",
+              "lookupValue": "true"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        192,
+        -256
+      ],
+      "id": "4b2de8b6-90ca-48f0-9321-e09b28c70df8",
+      "name": "Get row(s) in sheet",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "dxeP1arALl9rNy7R",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "url": "=https://cafef.vn/du-lieu/tin-doanh-nghiep/{{ $json.ticker }}/Event.chn",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        384,
+        -256
+      ],
+      "id": "c3f9e63b-5c25-4866-85ee-cd216f4d8e23",
+      "name": "HTTP Request"
+    },
+    {
+      "parameters": {
+        "operation": "extractHtmlContent",
+        "extractionValues": {
+          "values": [
+            {
+              "key": "article_title",
+              "cssSelector": "a.docnhanhTitle",
+              "returnArray": true
+            },
+            {
+              "key": "article_url",
+              "cssSelector": "a.docnhanhTitle",
+              "returnValue": "attribute",
+              "attribute": "href",
+              "returnArray": true
+            },
+            {
+              "key": "article_date",
+              "cssSelector": "span.timeTitle",
+              "returnArray": true
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.html",
+      "typeVersion": 1.2,
+      "position": [
+        560,
+        -256
+      ],
+      "id": "b42b1a9a-e7af-49c1-a9c1-44cd2627f00a",
+      "name": "HTML"
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "value": "models/gemini-2.5-flash",
+          "mode": "list",
+          "cachedResultName": "models/gemini-2.5-flash"
+        },
+        "messages": {
+          "values": [
+            {
+              "content": "=Bạn là một chuyên gia phân tích dữ liệu tài chính doanh nghiệp hàng đầu.\nNhiệm vụ của bạn là phân tích danh sách các tiêu đề tin tức chứng khoán dưới đây. Mỗi tiêu đề nằm trên một dòng độc lập.\n\nDanh sách tiêu đề:\n{{ $json.aggregated_titles }}\n\nHãy phân tích và trả về một MẢNG JSON (JSON Array), bên trong chứa các đối tượng JSON tương ứng với từng tiêu đề. Không kèm câu giải thích hay định dạng markdown (```json).\n\nMỗi đối tượng trong mảng bắt buộc phải có đủ 6 trường (keys) sau:\n1. \"article_title\": Giữ nguyên tiêu đề gốc được phân tích để đối chiếu.\n2. \"market_sentiment\": Đánh giá sắc thái (Chỉ chọn: \"Tích cực\", \"Tiêu cực\", \"Trung tính\").\n3. \"event_category\": Phân loại (Ví dụ: \"Biến động nhân sự\", \"Báo cáo tài chính\", \"Quản trị doanh nghiệp\", \"Chia cổ tức\").\n4. \"financial_metrics\": Chỉ số tài chính nhắc đến (Nếu không có, trả về \"Không có\").\n5. \"growth_catalysts\": Động lực tăng trưởng (Nếu không rõ, trả về \"Không có\").\n6. \"ai_action_signal\": Tín hiệu hành động (Số nguyên: 1 nếu Tích cực, -1 nếu Tiêu cực, 0 nếu Trung tính)."
+            }
+          ]
+        },
+        "simplify": false,
+        "jsonOutput": true,
+        "builtInTools": {
+          "urlContext": false
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.googleGemini",
+      "typeVersion": 1.2,
+      "position": [
+        1744,
+        -160
+      ],
+      "id": "1ac51cfd-a67f-490f-9295-433ce736bc1d",
+      "name": "Message a model",
+      "retryOnFail": true,
+      "waitBetweenTries": 5000,
+      "executeOnce": false,
+      "notesInFlow": false,
+      "alwaysOutputData": false,
+      "credentials": {
+        "googlePalmApi": {
+          "id": "JApAg3S3ddCHKBbi",
+          "name": "Google Gemini(PaLM) Api account 2"
+        }
+      },
+      "disabled": true
+    },
+    {
+      "parameters": {
+        "jsCode": "// 1. Kéo thả lại đường dẫn chứa kết quả từ Gemini vào biến này nhé:\nlet aiResponse = $input.first().json.candidates[0].content.parts[0].text; \n\n// 2. Dùng split và join để gọt sạch dấu nháy (Không dùng Regex nữa)\nlet cleanText = aiResponse;\nif (cleanText) {\n    cleanText = cleanText.split(\"```json\").join(\"\");\n    cleanText = cleanText.split(\"```\").join(\"\");\n    cleanText = cleanText.trim();\n}\n\n// 3. Dịch chuỗi văn bản thành Mảng dữ liệu thật\nlet dataArray = JSON.parse(cleanText);\n\n// 4. Bọc lại thành cấu trúc Items để đổ từng dòng vào PostgreSQL\nlet finalItems = dataArray.map(article => {\n    return { json: article };\n});\n\nreturn finalItems;"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2080,
+        -144
+      ],
+      "id": "23e13ed9-e386-4ef1-b1f7-b7bfc3021f91",
+      "name": "Code in JavaScript",
+      "disabled": true
+    },
+    {
+      "parameters": {
+        "jsCode": "// 1. Trích xuất tất cả các tiêu đề từ luồng dữ liệu trước đó\nlet titles = $input.all().map(item => item.json.article_title);\n\n// 2. Gộp các tiêu đề lại thành 1 đoạn văn bản, mỗi tiêu đề nằm trên 1 dòng\nlet combinedTitles = titles.join(\"\\n\");\n\n// 3. Trả về đúng 1 khối dữ liệu duy nhất chứa đoạn văn bản đó\nreturn [{\n    json: {\n        aggregated_titles: combinedTitles\n    }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1200,
+        -128
+      ],
+      "id": "c2f5c0ff-b534-4d11-9a38-6c9225f3bb90",
+      "name": "Code in JavaScript1",
+      "disabled": true
+    },
+    {
+      "parameters": {
+        "schema": {
+          "__rl": true,
+          "value": "public",
+          "mode": "list",
+          "cachedResultName": "public"
+        },
+        "table": {
+          "__rl": true,
+          "value": "market_news_analysis",
+          "mode": "list",
+          "cachedResultName": "market_news_analysis"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "ai_action_signal": "={{ $json.ai_action_signal }}",
+            "article_title": "={{ $json.article_title }}",
+            "market_sentiment": "={{ $json.market_sentiment }}",
+            "event_category": "={{ $json.event_category }}",
+            "financial_metrics": "={{ $json.financial_metrics }}",
+            "growth_catalysts": "={{ $json.growth_catalysts }}",
+            "article_url": "={{ $json.article_url }}",
+            "ticker": "={{ $json.ticker }}"
+          },
+          "matchingColumns": [
+            "id"
+          ],
+          "schema": [
+            {
+              "id": "id",
+              "displayName": "id",
+              "required": false,
+              "defaultMatch": true,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "ticker",
+              "displayName": "ticker",
+              "required": true,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "article_title",
+              "displayName": "article_title",
+              "required": true,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "article_url",
+              "displayName": "article_url",
+              "required": true,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "publish_date",
+              "displayName": "publish_date",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "market_sentiment",
+              "displayName": "market_sentiment",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "event_category",
+              "displayName": "event_category",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "financial_metrics",
+              "displayName": "financial_metrics",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "growth_catalysts",
+              "displayName": "growth_catalysts",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "risk_warnings",
+              "displayName": "risk_warnings",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "ai_action_signal",
+              "displayName": "ai_action_signal",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "created_at",
+              "displayName": "created_at",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        2624,
+        -384
+      ],
+      "id": "15ea2dd5-e550-4a9d-9f8b-51d1828b9e85",
+      "name": "Insert rows in a table",
+      "credentials": {
+        "postgres": {
+          "id": "hRJpaR3aOdQ960ax",
+          "name": "Postgres account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "mode": "combine",
+        "combineBy": "combineByPosition",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        2416,
+        -400
+      ],
+      "id": "c3df4173-75d5-43e1-a470-5e7dac6e4416",
+      "name": "Merge"
+    },
+    {
+      "parameters": {
+        "jsCode": "let finalItems = [];\n\n// Lấy toàn bộ đầu vào từ Node HTML và toàn bộ mã từ Node Excel\nlet inputItems = $input.all(); \nlet sheetItems = $('Get row(s) in sheet').all();\n\n// Lặp qua TỪNG luồng dữ liệu (Từng mã chứng khoán: VCI, VHC, FPT...)\nfor (let index = 0; index < inputItems.length; index++) {\n    \n    // Lấy mảng bài báo của mã chứng khoán hiện tại\n    let titles = inputItems[index].json.article_title || [];\n    let urls = inputItems[index].json.article_url || [];\n    let dates = inputItems[index].json.article_date || [];\n    \n    // Tuyệt chiêu Map dữ liệu: HTML số mấy thì lấy Ticker ở dòng số bấy nhiêu!\n    let ticker = sheetItems[index] ? sheetItems[index].json.ticker : \"UNKNOWN\";\n\n    // Khâu các phần tử của riêng mã chứng khoán này lại với nhau\n    let max_length = Math.max(titles.length, urls.length);\n    for (let i = 0; i < max_length; i++) {\n        if(titles[i]) {\n            let raw_url = urls[i] ? urls[i].trim() : \"\";\n            let full_url = raw_url.startsWith(\"http\") ? raw_url : \"https://cafef.vn\" + raw_url;\n          \n            finalItems.push({\n                json: {\n                    ticker: ticker,\n                    article_title: titles[i],\n                    article_url: full_url,\n                    article_date: dates[i]\n                }\n            });\n        }\n    }\n}\n\n// Trả về danh sách tổng hợp của TẤT CẢ các mã\nreturn finalItems;"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        752,
+        -256
+      ],
+      "id": "457f5a32-0958-483d-b22f-ae5b5bec4ffc",
+      "name": "Code in JavaScript2"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "65d2b18e-cc8a-460b-a176-50b4e26df6c7",
+              "leftValue": "=={{ $json.article_date }}",
+              "rightValue": "={{ $now.minus({ days: 1 }).format('dd/MM/yyyy') }}",
+              "operator": {
+                "type": "string",
+                "operation": "contains"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.filter",
+      "typeVersion": 2.3,
+      "position": [
+        944,
+        -256
+      ],
+      "id": "380dd6f2-5ba3-42f1-8299-da39a32edfb4",
+      "name": "Filter"
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "triggerAtHour": 9
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.3,
+      "position": [
+        0,
+        -256
+      ],
+      "id": "f8a50d38-16f5-4132-bbcc-79eb0007c838",
+      "name": "Schedule Trigger"
+    },
+    {
+      "parameters": {
+        "chatId": "8601596670",
+        "text": "=🚨 CẢNH BÁO RỦI RO THỊ TRƯỜNG 🚨 Hệ thống phát hiện tin tức tiêu cực có khả năng ảnh hưởng đến mã: {{ $('Merge').item.json.ticker }}  📰 Tiêu đề: {{ $('Merge').item.json.article_title }} ⏰ Thời gian: {{ $('Merge').item.json.article_date }}   🔗 Đọc bài báo gốc: {{ $('Merge').item.json.article_url }}",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        3056,
+        -288
+      ],
+      "id": "5351f75c-f607-44f6-82ec-c1f4692f15fb",
+      "name": "Send a text message",
+      "webhookId": "a8737f83-b1e5-41fb-a688-01ea36b36ba6",
+      "credentials": {
+        "telegramApi": {
+          "id": "aPmDlrXpE41b96wq",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.market_sentiment }}",
+                    "rightValue": "Tích cực",
+                    "operator": {
+                      "type": "string",
+                      "operation": "contains"
+                    },
+                    "id": "6ecec894-7aee-4d66-850e-714b2bde8ecd"
+                  }
+                ],
+                "combinator": "and"
+              }
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "6ba679d0-76a0-4e0b-a340-7e239f8d6412",
+                    "leftValue": "={{ $json.market_sentiment }}",
+                    "rightValue": "Tiêu cực",
+                    "operator": {
+                      "type": "string",
+                      "operation": "contains"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              }
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.4,
+      "position": [
+        2784,
+        -352
+      ],
+      "id": "b21d58cb-9222-412c-94ac-13804dde011f",
+      "name": "Switch"
+    },
+    {
+      "parameters": {
+        "chatId": "8601596670",
+        "text": "=🟢 TÍN HIỆU TÍCH CỰC TỪ THỊ TRƯỜNG 🟢\nCơ hội tiềm năng vừa xuất hiện cho mã: {{ $json.ticker }}\n  \n📰 Tiêu đề: {{ $json.article_title }}\n⏰ Thời gian: {{ $json.publish_date }}\n  \n🔗 Đọc chi tiết tại: {{ $json.article_url }}",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        3040,
+        -432
+      ],
+      "id": "305b9a4e-fb06-43e1-960b-2c88aca33f89",
+      "name": "Send a text message1",
+      "webhookId": "bf2789fd-410f-4d7b-a791-f4436e16b8a1",
+      "credentials": {
+        "telegramApi": {
+          "id": "aPmDlrXpE41b96wq",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "xlsx",
+        "options": {
+          "fileName": "tin_thi_truong.xlsx"
+        }
+      },
+      "type": "n8n-nodes-base.convertToFile",
+      "typeVersion": 1.1,
+      "position": [
+        2560,
+        -128
+      ],
+      "id": "4d5456d9-839c-4f6e-a704-5b3cde11afe3",
+      "name": "Convert to File"
+    },
+    {
+      "parameters": {
+        "sendTo": "toanthiennguyen2005@gmail.com",
+        "subject": "=[Cảnh báo thị trường] Báo cáo tổng hợp tin tức cổ phiếu ngày {{ $now.format('dd/MM/yyyy') }}",
+        "message": "Kính gửi Nhà đầu tư,  Hệ thống tự động hóa vừa hoàn thành quy trình cào dữ liệu và phân tích cảm xúc thị trường bằng AI cho danh sách mã cổ phiếu theo dõi trong 24 giờ qua.  Xin vui lòng xem chi tiết danh sách các bài báo, đường link gốc và đánh giá xu hướng (Tích cực/Tiêu cực) được đính kèm trong file Excel bên dưới.  Trân trọng, Hệ thống cảnh báo.",
+        "options": {
+          "attachmentsUi": {
+            "attachmentsBinary": [
+              {}
+            ]
+          }
+        }
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        2720,
+        -112
+      ],
+      "id": "bec5c034-4598-4fb7-b45d-21ae7e3d8312",
+      "name": "Send a message",
+      "webhookId": "87e4af13-b5b2-499b-821a-3a9db6b085aa",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "hsWAAeM0IWs9u8Zh",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://host.docker.internal:8000/analyze_title",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "ticker",
+              "value": "={{ $('Filter').item.json.ticker }}"
+            },
+            {
+              "name": "article_title",
+              "value": "={{ $('Filter').item.json.article_title }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        1488,
+        -160
+      ],
+      "id": "46e713ee-40b2-4eed-8542-7199fe9b15d4",
+      "name": "HTTP Request1",
+      "retryOnFail": true,
+      "waitBetweenTries": 5000
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Get row(s) in sheet": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request": {
+      "main": [
+        [
+          {
+            "node": "HTML",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTML": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Message a model": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript1": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge": {
+      "main": [
+        [
+          {
+            "node": "Convert to File",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Insert rows in a table",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript2": {
+      "main": [
+        [
+          {
+            "node": "Filter",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Filter": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript1",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "Get row(s) in sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Insert rows in a table": {
+      "main": [
+        [
+          {
+            "node": "Switch",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Switch": {
+      "main": [
+        [
+          {
+            "node": "Send a text message1",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Send a text message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Convert to File": {
+      "main": [
+        [
+          {
+            "node": "Send a message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request1": {
+      "main": [
+        [
+          {
+            "node": "Message a model",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "timeSavedMode": "fixed",
+    "timezone": "Asia/Ho_Chi_Minh",
+    "callerPolicy": "workflowsFromSameOwner",
+    "availableInMCP": false
+  },
+  "versionId": "6d3cb14f-b15b-40bd-bc7f-28a34313f4f2",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "e7e59a1050680c3d1d370f48d7cb0e3d8d4b0b97ee8400107074f5d32b7ec5e8"
+  },
+  "id": "ouPN9vxWB5YIBcLa",
+  "tags": []
+}
