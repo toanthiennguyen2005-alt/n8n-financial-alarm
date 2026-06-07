@@ -1,0 +1,23 @@
+# Bỏ qua các file chứa biến môi trường và key bảo mật
+.env
+*.key
+*.pem
+credentials/
+secrets/
+
+# Bỏ qua các file cache và môi trường ảo của Python
+__pycache__/
+*.py[cod]
+*$py.class
+.venv/
+venv/
+env/
+
+# Bỏ qua file database cục bộ (nếu có để tránh push nhầm dữ liệu thật)
+*.sqlite
+*.db
+
+# Bỏ qua các thư mục log hoặc cấu hình hệ điều hành
+.DS_Store
+Thumbs.db
+logs/
